@@ -1,5 +1,6 @@
 package vn.miro.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import vn.miro.dto.request.UserRequestDTO;
 
@@ -9,9 +10,9 @@ import java.util.List;
 @RequestMapping("/user")
 public class UserController {
 
-//    @PostMapping(value = "/", headers = "apiKey=v1.0")
-    @RequestMapping(method = RequestMethod.POST, path = "/", headers = "apiKey=v1.0")
-    public String addUser(@RequestBody UserRequestDTO userDTO){
+    // @RequestMapping(method = RequestMethod.POST, path = "/", headers = "apiKey=v1.0")
+    @PostMapping(value = "/", headers = "apiKey=v1.0")
+    public String addUser(@Valid @RequestBody UserRequestDTO userDTO){
 
         return "User added";
 
@@ -35,7 +36,7 @@ public class UserController {
 
 
     @PutMapping("/{userId}")
-    public String updateUser(@PathVariable int userId, @RequestBody UserRequestDTO userDTO){
+    public String updateUser(@PathVariable int userId, @Valid @RequestBody UserRequestDTO userDTO){
         System.out.println("Request update userId=" + userId);
         return "User updated";
     }

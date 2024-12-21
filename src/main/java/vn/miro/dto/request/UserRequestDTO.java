@@ -3,7 +3,9 @@ package vn.miro.dto.request;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
 import org.springframework.format.annotation.DateTimeFormat;
+import vn.miro.util.EnumPattern;
 import vn.miro.util.PhoneNumber;
+import vn.miro.util.UserStatus;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -28,6 +30,11 @@ public class UserRequestDTO implements Serializable {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     @JsonFormat(pattern = "MM/DD/YYYY")
     private Date dateOfBirth;
+
+    // @Pattern(regexp = "^ACTIVE|INACTIVE|NONE$", message = "status must be one in {ACTIVE, INACTIVE, NONE}")
+    @EnumPattern(name = "status", regexp = "ACTIVE|INACTIVE|NONE")
+    private UserStatus status;
+
 
     @NotEmpty
     private List<String> permission;
@@ -77,5 +84,9 @@ public class UserRequestDTO implements Serializable {
 
     public void setDateOfBirth(Date dateOfBirth) {
         this.dateOfBirth = dateOfBirth;
+    }
+
+    public UserStatus getStatus() {
+        return status;
     }
 }

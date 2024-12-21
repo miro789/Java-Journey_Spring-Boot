@@ -3,13 +3,13 @@ package vn.miro.dto.request;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
 import org.springframework.format.annotation.DateTimeFormat;
-import vn.miro.util.EnumPattern;
-import vn.miro.util.PhoneNumber;
-import vn.miro.util.UserStatus;
+import vn.miro.util.*;
 
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+
+import static vn.miro.util.Gender.*;
 
 public class UserRequestDTO implements Serializable {
     @NotBlank(message = "First name must be not blank")
@@ -34,6 +34,13 @@ public class UserRequestDTO implements Serializable {
     // @Pattern(regexp = "^ACTIVE|INACTIVE|NONE$", message = "status must be one in {ACTIVE, INACTIVE, NONE}")
     @EnumPattern(name = "status", regexp = "ACTIVE|INACTIVE|NONE")
     private UserStatus status;
+
+    @GenderSubset(anyOf = {MALE, FEMALE, OTHER})
+    private Gender gender;
+
+    @NotNull(message = "type must be not null")
+    @EnumValue(name = "type", enumClass = UserType.class)
+    private String type;
 
 
     @NotEmpty

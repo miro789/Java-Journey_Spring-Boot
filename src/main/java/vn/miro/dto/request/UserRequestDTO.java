@@ -19,7 +19,7 @@ public class UserRequestDTO implements Serializable {
     private String lastName;
 
     // @Pattern(regexp ="^\\d{10}$", message = "Email invalid format")
-    // custome anotation
+    // custome anotation 
     @PhoneNumber
     private String phone;
 

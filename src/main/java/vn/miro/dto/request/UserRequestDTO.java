@@ -96,4 +96,12 @@ public class UserRequestDTO implements Serializable {
     public UserStatus getStatus() {
         return status;
     }
+
+    public Gender getGender() {
+        return gender;
+    }
+
+    public String getType() {
+        return type;
+    }
 }

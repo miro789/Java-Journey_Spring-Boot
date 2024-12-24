@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import vn.miro.configuration.Translator;
 import vn.miro.dto.request.SampleDTO;
 import vn.miro.dto.request.UserRequestDTO;
 import vn.miro.dto.response.ResponseData;
@@ -64,7 +65,7 @@ public class UserController {
 
         try {
             userService.addUser(userDTO);
-            return new ResponseData<>(HttpStatus.CREATED.value(), "User added successful", 1);
+            return new ResponseData<>(HttpStatus.CREATED.value(), Translator.toLocale("user.add.success"), 1);
         } catch (Exception e) {
             return new ResponseError(HttpStatus.BAD_REQUEST.value(), "Save fail");
         }
@@ -109,7 +110,7 @@ public class UserController {
     // @ResponseStatus(HttpStatus.ACCEPTED)
     public ResponseData<?> updateUser(@PathVariable int userId, @Valid @RequestBody UserRequestDTO userDTO){
         log.info("Request update userId = {}", userId);
-        return new ResponseData<>(HttpStatus.ACCEPTED.value(), "User updated successfully");
+        return new ResponseData<>(HttpStatus.ACCEPTED.value(), Translator.toLocale("user.upd.success"));
     }
 
     @PatchMapping("/{userId}")

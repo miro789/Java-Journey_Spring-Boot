@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,8 @@ import java.util.List;
 @RequestMapping("/user")
 @Validated
 @Slf4j
+
+@Tag(name = "User Controller")
 public class UserController {
 
     @Autowired
@@ -46,6 +49,7 @@ public class UserController {
 //                            )))
 //    })
 
+    @Operation(summary = "Add user", description = "API create new user")
     // @RequestMapping(method = RequestMethod.POST, path = "/", headers = "apiKey=v1.0")
     @PostMapping(value = "/", headers = "apiKey=v1.0")
     // @ResponseStatus(HttpStatus.CREATED)
@@ -72,6 +76,7 @@ public class UserController {
 
     }
 
+    @Operation(summary = "Get user detail", description = "API get user detail")
     @GetMapping ("/{userId}")
     // @ResponseStatus(HttpStatus.OK)
     public ResponseData<UserRequestDTO> getUser(@PathVariable int userId) {
@@ -79,6 +84,7 @@ public class UserController {
         return new ResponseData<>(HttpStatus.OK.value(), "user", new UserRequestDTO("Miro", "Doan", "phone", "email"));
     }
 
+    @Operation(summary = "Get user list per page", description = "Return user by pageNo and pageSize")
     @GetMapping("/list")
     // @ResponseStatus(HttpStatus.OK)
     public ResponseData<List<UserRequestDTO>> getAllUser(
@@ -106,6 +112,7 @@ public class UserController {
 //                            )))
 //    })
 
+    @Operation(summary = "Update user", description = "API update user")
     @PutMapping("/{userId}")
     // @ResponseStatus(HttpStatus.ACCEPTED)
     public ResponseData<?> updateUser(@PathVariable int userId, @Valid @RequestBody UserRequestDTO userDTO){
@@ -113,6 +120,7 @@ public class UserController {
         return new ResponseData<>(HttpStatus.ACCEPTED.value(), Translator.toLocale("user.upd.success"));
     }
 
+    @Operation(summary = "Change status of user", description = "API change status of user")
     @PatchMapping("/{userId}")
     // @ResponseStatus(HttpStatus.ACCEPTED)
     public ResponseData<?> updateStatus(@Min(1) @PathVariable int userId, @RequestParam(required = false) boolean status)
@@ -121,6 +129,7 @@ public class UserController {
         return new ResponseData<>(HttpStatus.ACCEPTED.value(), "User status changed");
     }
 
+    @Operation(summary = "Delete user", description = "API delete user")
     @DeleteMapping("/{userId}")
     // @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseData<?> deleteUser(@PathVariable int userId)

@@ -1,0 +1,48 @@
+
+
+spring:
+  application:
+    name: miro-do-java
+    profiles:
+      active: dev
+
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+openapi:
+  service:
+    api-docs: api-service
+    server: http://localhost:9090
+    title: API Service
+    version: 1.0.0
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+
+openapi:
+  service:
+    api-docs: api-service
+    server: http://localhost:9091
+    title: API Service
+    version: 1.0.0
+
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+openapi:
+  service:
+    api-docs: api-service
+    server: http://localhost:9092
+    title: API Service
+    version: 1.0.0

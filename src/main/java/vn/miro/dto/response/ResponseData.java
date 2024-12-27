@@ -1,7 +1,8 @@
 package vn.miro.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import org.springframework.http.HttpStatus;
+
+import java.io.Serializable;
 
 public class ResponseData<T> {
     private final int status;
@@ -34,5 +35,10 @@ public class ResponseData<T> {
 
     public T getData() {
         return data;
+    }
+
+    public static class UserDetailResponse implements Serializable {
+
+
     }
 }

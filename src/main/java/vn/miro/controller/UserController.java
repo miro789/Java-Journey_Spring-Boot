@@ -1,25 +1,24 @@
 package vn.miro.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import vn.miro.configuration.Translator;
-import vn.miro.dto.request.SampleDTO;
 import vn.miro.dto.request.UserRequestDTO;
 import vn.miro.dto.response.ResponseData;
 import vn.miro.dto.response.ResponseError;
-import vn.miro.dto.response.ResponseSuccess;
+import vn.miro.dto.response.UserDetailResponse;
+import vn.miro.exception.ResourceNotFoundException;
 import vn.miro.service.UserService;
+import vn.miro.service.impl.UserServiceImpl;
+import vn.miro.util.UserStatus;
 
 import java.util.List;
 
@@ -29,10 +28,12 @@ import java.util.List;
 @Slf4j
 
 @Tag(name = "User Controller")
+@RequiredArgsConstructor
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+//    @Autowired
+//    private UserServiceImpl.UserService userService;
+    private final UserService userService;
 
     // Summary for Post mapping
 //    @Operation(summary = "summary", description = "description", responses = {
@@ -59,7 +60,7 @@ public class UserController {
 //
 //    }
 
-    public ResponseData<Integer> addUser(@Valid @RequestBody UserRequestDTO userDTO){
+    public ResponseData<Long> addUser(@Valid @RequestBody UserRequestDTO userDTO){
         log.info("Request add user = {} {}", userDTO.getFirstName(), userDTO.getLastName());
 
 //        SampleDTO dto = SampleDTO.builder()
@@ -68,10 +69,11 @@ public class UserController {
 //                .build();
 
         try {
-            userService.addUser(userDTO);
-            return new ResponseData<>(HttpStatus.CREATED.value(), Translator.toLocale("user.add.success"), 1);
+            long userId = userService.saveUser(userDTO);
+            return new ResponseData<>(HttpStatus.CREATED.value(), Translator.toLocale("user.add.success"), userId);
         } catch (Exception e) {
-            return new ResponseError(HttpStatus.BAD_REQUEST.value(), "Save fail");
+            log.error("errorMessage={}", e.getMessage(), e.getCause());
+            return new ResponseError(HttpStatus.BAD_REQUEST.value(), "Add user fail");
         }
 
     }
@@ -79,21 +81,43 @@ public class UserController {
     @Operation(summary = "Get user detail", description = "API get user detail")
     @GetMapping ("/{userId}")
     // @ResponseStatus(HttpStatus.OK)
-    public ResponseData<UserRequestDTO> getUser(@PathVariable int userId) {
+    public ResponseData<UserDetailResponse> getUser(@PathVariable long userId) {
         log.info("Request get user detail by userId = {}", userId);
-        return new ResponseData<>(HttpStatus.OK.value(), "user", new UserRequestDTO("Miro", "Doan", "phone", "email"));
+        try {
+            return new ResponseData<>(HttpStatus.OK.value(), "user", userService.getUser(userId));
+
+        } catch (ResourceNotFoundException e) {
+            log.error("errorMessage{}", e.getMessage(), e.getCause());
+            return new ResponseError(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+
+        }
+
     }
 
     @Operation(summary = "Get user list per page", description = "Return user by pageNo and pageSize")
     @GetMapping("/list")
     // @ResponseStatus(HttpStatus.OK)
-    public ResponseData<List<UserRequestDTO>> getAllUser(
+    public ResponseData<?> getAllUser(
             @RequestParam(required = false) String email,
-            @RequestParam(defaultValue = "0") int pageNo,
-            @RequestParam(defaultValue = "10") int pageSize) {
+            @RequestParam(defaultValue = "0", required = false) int pageNo,
+            @Min(10) @RequestParam(defaultValue = "20", required = false) int pageSize,
+            @RequestParam(required = false) String sortBy
+            ) {
         log.info("Request get user list");
-        return new ResponseData<>(HttpStatus.OK.value(), "users", List.of(new UserRequestDTO("Miro", "Doan", "phone", "email"),
-                new UserRequestDTO("Miro", "Doan", "phone", "email")));
+        return new ResponseData<>(HttpStatus.OK.value(), "users", userService.getAllUsersWithSortBy(pageNo, pageSize, sortBy));
+    }
+
+    @Operation(summary = "Get list of users with sort by multiple columns", description = "Return user by pageNo, pageSize and sort by multiple column ")
+    @GetMapping("/list")
+    // @ResponseStatus(HttpStatus.OK)
+    public ResponseData<?> getAllUsersWithSortByMultipleColumn(
+            @RequestParam(required = false) String email,
+            @RequestParam(defaultValue = "0", required = false) int pageNo,
+            @Min(10) @RequestParam(defaultValue = "20", required = false) int pageSize,
+            @RequestParam(required = false) String... sort
+    ) {
+        log.info("Request get all of users with sort by multiple column");
+        return new ResponseData<>(HttpStatus.OK.value(), "users", userService.getAllUsersWithSortByMultipleColumn(pageNo, pageSize, sort));
     }
 
 
@@ -115,18 +139,38 @@ public class UserController {
     @Operation(summary = "Update user", description = "API update user")
     @PutMapping("/{userId}")
     // @ResponseStatus(HttpStatus.ACCEPTED)
-    public ResponseData<?> updateUser(@PathVariable int userId, @Valid @RequestBody UserRequestDTO userDTO){
+    public ResponseData<?> updateUser(@PathVariable long userId, @Valid @RequestBody UserRequestDTO userDTO){
         log.info("Request update userId = {}", userId);
-        return new ResponseData<>(HttpStatus.ACCEPTED.value(), Translator.toLocale("user.upd.success"));
+        try {
+            userService.updateUser(userId, userDTO);
+            return new ResponseData<>(HttpStatus.ACCEPTED.value(), Translator.toLocale("user.upd.success"));
+
+        } catch (Exception e) {
+            log.error("errorMessage{}", e.getMessage(), e.getCause());
+            return new ResponseError(HttpStatus.BAD_REQUEST.value(), "Update user fail");
+
+        }
+
     }
 
     @Operation(summary = "Change status of user", description = "API change status of user")
     @PatchMapping("/{userId}")
     // @ResponseStatus(HttpStatus.ACCEPTED)
-    public ResponseData<?> updateStatus(@Min(1) @PathVariable int userId, @RequestParam(required = false) boolean status)
+    public ResponseData<?> updateStatus(@Min(1) @PathVariable long userId, @RequestParam UserStatus status)
     {
         log.info("Request change user status, userId = {}", userId);
-        return new ResponseData<>(HttpStatus.ACCEPTED.value(), "User status changed");
+
+        try {
+            userService.changeStatus(userId, status);
+            return new ResponseData<>(HttpStatus.ACCEPTED.value(), "User status changed");
+
+        } catch (Exception e) {
+            log.error("errorMessage{}", e.getMessage(), e.getCause());
+            return new ResponseError(HttpStatus.BAD_REQUEST.value(), "Change status fail");
+
+        }
+
+
     }
 
     @Operation(summary = "Delete user", description = "API delete user")
@@ -135,9 +179,16 @@ public class UserController {
     public ResponseData<?> deleteUser(@PathVariable int userId)
     {
         System.out.println("Request delete userId=" + userId);
-        return new ResponseData<>(HttpStatus.NO_CONTENT.value(), "User deleted");
-    }
 
+        try {
+            userService.deleteUser(userId);
+            return new ResponseData<>(HttpStatus.NO_CONTENT.value(), Translator.toLocale("user.del.success"));
+        } catch (Exception e) {
+            log.error("errorMessage{}", e.getMessage(), e.getCause());
+            return new ResponseError(HttpStatus.BAD_REQUEST.value(), "Delete user fail");
+        }
+
+    }
 
 
 }

@@ -13,6 +13,7 @@ import vn.miro.dto.response.PageResponse;
 import vn.miro.dto.response.UserDetailResponse;
 import vn.miro.exception.ResourceNotFoundException;
 import vn.miro.model.User;
+import vn.miro.repository.SearchRepository;
 import vn.miro.repository.UserRepository;
 import vn.miro.service.UserService;
 import vn.miro.util.UserStatus;
@@ -29,6 +30,7 @@ import java.util.regex.Pattern;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final SearchRepository repository;
 
     @Override
     public long saveUser(UserRequestDTO requestDTO) {
@@ -170,6 +172,12 @@ public class UserServiceImpl implements UserService {
                 .items(response)
                 .build();
 
+    }
+
+    @Override
+    public PageResponse<?> getAllUsersWithSortByColumnAndSearch(int pageNo, int pageSize, String search, String sortBy) {
+
+        return repository.getAllUsersWithSortByColumnAndSearch(pageNo, pageSize, search, sortBy);
     }
 
     private User getUserById(long userId) {

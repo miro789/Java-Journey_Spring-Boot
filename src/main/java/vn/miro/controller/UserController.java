@@ -107,8 +107,8 @@ public class UserController {
         return new ResponseData<>(HttpStatus.OK.value(), "users", userService.getAllUsersWithSortBy(pageNo, pageSize, sortBy));
     }
 
-    @Operation(summary = "Get list of users with sort by multiple columns", description = "Return user by pageNo, pageSize and sort by multiple column ")
-    @GetMapping("/list")
+    @Operation(summary = "Get list of users with sort by multiple columns", description = "Send a request via this API to get user list by multiple columns ")
+    @GetMapping("/list-with-sort-by-multiple-columns")
     // @ResponseStatus(HttpStatus.OK)
     public ResponseData<?> getAllUsersWithSortByMultipleColumn(
             @RequestParam(required = false) String email,
@@ -118,6 +118,21 @@ public class UserController {
     ) {
         log.info("Request get all of users with sort by multiple column");
         return new ResponseData<>(HttpStatus.OK.value(), "users", userService.getAllUsersWithSortByMultipleColumn(pageNo, pageSize, sort));
+    }
+
+
+    @Operation(summary = "Get list of users with sort by columns and search", description = "Return user by pageNo, pageSize and sort by multiple column ")
+    @GetMapping("/list-with-sort-by-multiple-columns-search")
+    // @ResponseStatus(HttpStatus.OK)
+    public ResponseData<?> getAllUsersWithSortByColumnAndSearch(
+            @RequestParam(required = false) String email,
+            @RequestParam(defaultValue = "0", required = false) int pageNo,
+            @Min(10) @RequestParam(defaultValue = "20", required = false) int pageSize,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String sortBy
+    ) {
+        log.info("Request get all of users with sort by column and search");
+        return new ResponseData<>(HttpStatus.OK.value(), "users", userService.getAllUsersWithSortByColumnAndSearch(pageNo, pageSize, search, sortBy));
     }
 
 

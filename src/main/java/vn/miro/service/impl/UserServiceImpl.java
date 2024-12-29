@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import vn.miro.dto.request.UserRequestDTO;
@@ -15,10 +16,13 @@ import vn.miro.exception.ResourceNotFoundException;
 import vn.miro.model.User;
 import vn.miro.repository.SearchRepository;
 import vn.miro.repository.UserRepository;
+import vn.miro.repository.specification.UserSpec;
 import vn.miro.service.UserService;
+import vn.miro.util.Gender;
 import vn.miro.util.UserStatus;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -140,15 +144,17 @@ public class UserServiceImpl implements UserService {
 
         List<Sort.Order> orders = new ArrayList<>();
 
-        for (String sortBy: sorts) {
-            // firstName:asc|desc
-            Pattern pattern = Pattern.compile("(\\w+?)(:)(.*)");
-            Matcher matcher = pattern.matcher(sortBy);
-            if (matcher.find()) {
-                if (matcher.group(3).equalsIgnoreCase("asc")) {
-                    orders.add(new Sort.Order(Sort.Direction.ASC, matcher.group(1)));
-                } else {
-                    orders.add(new Sort.Order(Sort.Direction.DESC, matcher.group(1)));
+        if (sorts != null) {
+            for (String sortBy : sorts) {
+                // firstName:asc|desc
+                Pattern pattern = Pattern.compile("(\\w+?)(:)(.*)");
+                Matcher matcher = pattern.matcher(sortBy);
+                if (matcher.find()) {
+                    if (matcher.group(3).equalsIgnoreCase("asc")) {
+                        orders.add(new Sort.Order(Sort.Direction.ASC, matcher.group(1)));
+                    } else {
+                        orders.add(new Sort.Order(Sort.Direction.DESC, matcher.group(1)));
+                    }
                 }
             }
         }
@@ -171,13 +177,53 @@ public class UserServiceImpl implements UserService {
                 .totalPage(users.getTotalPages())
                 .items(response)
                 .build();
-
     }
 
     @Override
     public PageResponse<?> getAllUsersWithSortByColumnAndSearch(int pageNo, int pageSize, String search, String sortBy) {
-
         return repository.getAllUsersWithSortByColumnAndSearch(pageNo, pageSize, search, sortBy);
+    }
+
+    @Override
+    public PageResponse<?> advanceSearchByCriteria(int pageNo, int pageSize, String sortBy, String... search) {
+        return repository.advanceSearchUser(pageNo, pageSize, sortBy, search);
+    }
+
+    @Override
+    public PageResponse<?> advanceSearchBySpecification(Pageable pageable, String[] user, String[] address) {
+
+        Page<User> users = null;
+
+        List<User> list = null;
+
+        if (user != null && address != null) {
+            // tim kiem tren user va address -> join tabla
+
+        } else if (user != null && address == null) {
+            // tim kiem tren bang user -> khong can join sang bang address
+            Specification<User> spec = UserSpec.hasFirstName("M");
+
+            Specification<User> genderSpec = UserSpec.notEqualGender(Gender.FEMALE);
+
+            Specification<User> finalSpec = spec.and(genderSpec);
+
+            list = userRepository.findAll(finalSpec);
+            return PageResponse.builder()
+                    .pageNo(pageable.getPageNumber())
+                    .pageSize(pageable.getPageSize())
+                    .totalPage(10)
+                    .items(list)
+                    .build();
+        } else {
+            users = userRepository.findAll(pageable);
+        }
+
+        return PageResponse.builder()
+                .pageNo(pageable.getPageNumber())
+                .pageSize(pageable.getPageSize())
+                .totalPage(users.getTotalPages())
+                .items(list)
+                .build();
     }
 
     private User getUserById(long userId) {

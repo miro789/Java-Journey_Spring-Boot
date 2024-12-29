@@ -3,6 +3,10 @@ package vn.miro.repository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -10,7 +14,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 import vn.miro.dto.response.PageResponse;
+import vn.miro.model.User;
+import vn.miro.repository.criteria.SearchCriteria;
+import vn.miro.repository.criteria.UserSearchCriteriaQueryConsumer;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -87,6 +95,72 @@ public class SearchRepository {
                 .totalPage(totalElements.intValue()/pageSize)
                 .items(page.stream().toList())
                 .build();
+    }
+
+    public PageResponse advanceSearchUser (int pageNo, int pageSize, String sortBy, String... search)
+    {
+        // firstName: T, lastName: T
+
+        List<SearchCriteria> criteriaList = new ArrayList<>();
+        // 1. lay ra danh sach user
+        if (search != null) {
+            for (String s : search) {
+                // firstName:val
+                Pattern pattern = Pattern.compile("(\\w+?)(:|>|<)(.*)");
+                Matcher matcher = pattern.matcher(sortBy);
+                if (matcher.find()) {
+                    criteriaList.add(new SearchCriteria(matcher.group(1), matcher.group(2), matcher.group(3)));
+                }
+            }
+        }
+
+        // 2. lay ra so luong ban ghi
+        List<User> users = getUsers(pageNo, pageSize, criteriaList, sortBy);
+
+
+        Long totalElements = 1l;
+
+        return PageResponse.builder()
+                .pageNo(pageNo) // offset = vi tri cua ban ghi trong danh sach
+                .pageSize(pageSize)
+                .totalPage(0)
+                .items(users)
+                .build();
+
+    }
+
+    private List<User> getUsers(int pageNo, int pageSize, List<SearchCriteria> criteriaList, String sortBy) {
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<User> query = criteriaBuilder.createQuery(User.class);
+        Root<User> root = query.from(User.class);
+
+        // Xu ly cac dieu kien tim kiem
+        Predicate predicate = criteriaBuilder.conjunction();
+        UserSearchCriteriaQueryConsumer queryConsumer = new UserSearchCriteriaQueryConsumer(criteriaBuilder, predicate, root);
+
+
+        criteriaList.forEach(queryConsumer);
+        predicate = queryConsumer.getPredicate();
+
+        query.where(predicate);
+
+        // sort
+        if (StringUtils.hasLength(sortBy)) {
+            Pattern pattern = Pattern.compile("(\\w+?)(:)(asc|desc)");
+            Matcher matcher = pattern.matcher(sortBy);
+            if (matcher.find()) {
+                String columnName = matcher.group(1);
+                if (matcher.group(3).equalsIgnoreCase("desc")) {
+                    query.orderBy(criteriaBuilder.desc(root.get(columnName)));
+                } else {
+                    query.orderBy(criteriaBuilder.asc(root.get(columnName)));
+                }
+
+            }
+        }
+
+        return entityManager.createQuery(query).setFirstResult(pageNo).setMaxResults(pageSize).getResultList();
+
     }
 
 }

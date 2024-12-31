@@ -17,6 +17,8 @@ import vn.miro.model.User;
 import vn.miro.repository.SearchRepository;
 import vn.miro.repository.UserRepository;
 import vn.miro.repository.specification.UserSpec;
+import vn.miro.repository.specification.UserSpecification;
+import vn.miro.repository.specification.UserSpecificationsBuilder;
 import vn.miro.service.UserService;
 import vn.miro.util.Gender;
 import vn.miro.util.UserStatus;
@@ -197,17 +199,31 @@ public class UserServiceImpl implements UserService {
         List<User> list = null;
 
         if (user != null && address != null) {
-            // tim kiem tren user va address -> join tabla
+            // tim kiem tren user va address -> join table
+
+
 
         } else if (user != null && address == null) {
             // tim kiem tren bang user -> khong can join sang bang address
-            Specification<User> spec = UserSpec.hasFirstName("M");
+//            Specification<User> spec = UserSpec.hasFirstName("M");
+//
+//            Specification<User> genderSpec = UserSpec.notEqualGender(Gender.FEMALE);
+//
+//            Specification<User> finalSpec = spec.and(genderSpec);
 
-            Specification<User> genderSpec = UserSpec.notEqualGender(Gender.FEMALE);
+            UserSpecificationsBuilder builder = new UserSpecificationsBuilder();
 
-            Specification<User> finalSpec = spec.and(genderSpec);
+            for (String s: user) {
+                Pattern pattern = Pattern.compile("(\\w+?)([:<>~!])(.*)(\\p{Punct}?)(.*)(\\p{Punct}?)");
+                Matcher matcher = pattern.matcher(s);
+                if (matcher.find()) {
+                    builder.with(matcher.group(1), matcher.group(2), matcher.group(3), matcher.group(4), matcher.group(5));
 
-            list = userRepository.findAll(finalSpec);
+
+                }
+            }
+
+            list = userRepository.findAll(builder.build());
             return PageResponse.builder()
                     .pageNo(pageable.getPageNumber())
                     .pageSize(pageable.getPageSize())

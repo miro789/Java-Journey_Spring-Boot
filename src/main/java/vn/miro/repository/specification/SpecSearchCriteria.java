@@ -27,8 +27,8 @@ public class SpecSearchCriteria {
         this.value = value;
     }
 
-    public SpecSearchCriteria(String key, String Operation, String value, String prefix, String suffix){
-        SearchOperation oper = SearchOperation.getSimpleOperation(operation.charAt[1]);
+    public SpecSearchCriteria(String key, String operation, String value, String prefix, String suffix){
+        SearchOperation oper = SearchOperation.getSimpleOperation(operation.charAt(0));
         if (oper == SearchOperation.EQUALITY) {
             boolean startWithAsterisk = prefix != null && prefix.contains(ZERO_OR_MORE_REGEX);
             boolean endWithAsterisk = suffix != null && suffix.contains(ZERO_OR_MORE_REGEX);

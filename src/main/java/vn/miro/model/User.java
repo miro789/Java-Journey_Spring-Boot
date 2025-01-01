@@ -60,6 +60,11 @@ public class User extends AbstractEntity{
     @Column(name = "status")
     private UserType status;
 
+    private Integer age;
+
+    private Boolean activated;
+
+
     @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "user")
     private Set<Address> addresses = new HashSet<>();
